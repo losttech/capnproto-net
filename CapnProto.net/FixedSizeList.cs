@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 namespace CapnProto
 {
+    using static ListPointer;
+
     public struct FixedSizeList<T> : IList<T>, IList, IPointer
     {
         public static explicit operator FixedSizeList<T>(Pointer pointer) { return new FixedSizeList<T>(pointer); }
@@ -157,5 +159,25 @@ namespace CapnProto
             return list;
         }
         Pointer IPointer.Pointer { get { return pointer; } }
+    }
+
+    public static class FixedSizeList {
+        public static System.Collections.IList AsList(this Pointer pointer) {
+            var listPointer = pointer.AsListPointer();
+            int elementCount = listPointer.ElementType == ElementSize.InlineComposite
+                ? throw new NotImplementedException()
+                : (int)(listPointer.Pointer.dataWordsAndPointers >> 3);
+            switch (listPointer.ElementType) {
+            case ElementSize.ZeroByte: return FixedSizeList<DBNull>.Create(pointer, elementCount);
+            case ElementSize.EightBytesPointer: return FixedSizeList<Pointer>.Create(pointer, elementCount);
+            case ElementSize.OneBit: return FixedSizeList<bool>.Create(pointer, elementCount);
+            case ElementSize.OneByte: return FixedSizeList<byte>.Create(pointer, elementCount);
+            case ElementSize.TwoBytes: return FixedSizeList<UInt16>.Create(pointer, elementCount);
+            case ElementSize.FourBytes: return FixedSizeList<UInt32>.Create(pointer, elementCount);
+            case ElementSize.EightBytesNonPointer: return FixedSizeList<UInt64>.Create(pointer, elementCount);
+            }
+
+            throw new NotImplementedException();
+        }
     }
 }

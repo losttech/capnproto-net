@@ -5,11 +5,19 @@ using System.Reflection;
 
 namespace CapnProto
 {
-    internal abstract class TypeAccessor<T>
+    interface IAccessor
+    {
+        bool IsStruct { get; }
+        bool IsPointer { get; }
+        object GetElement(Pointer pointer, int index);
+        void SetElement(Pointer pointer, int index, object value);
+    }
+    internal abstract class TypeAccessor<T>: IAccessor
     {
         public static readonly TypeAccessor<T> Instance;
         public abstract bool IsStruct { get; }
         public abstract bool IsPointer { get; }
+
         static TypeAccessor()
         {
             object tmp;
@@ -17,93 +25,61 @@ namespace CapnProto
             if(type == typeof(bool))
             {
                 tmp = new BooleanAccessor();
-            }
-            if (type == typeof(byte))
+            } else if (type == typeof(byte))
             {
                 tmp = new ByteAccessor();
-            }
-            if (type == typeof(sbyte))
+            } else if (type == typeof(sbyte))
             {
                 tmp = new SByteAccessor();
-            }
-            if (type == typeof(ushort))
+            } else if (type == typeof(ushort))
             {
                 tmp = new UInt16Accessor();
-            }
-            if (type == typeof(short))
+            } else if (type == typeof(short))
             {
                 tmp = new Int16Accessor();
-            }
-            if (type == typeof(uint))
+            } else if (type == typeof(uint))
             {
                 tmp = new UInt32Accessor();
-            }
-            if (type == typeof(int))
+            } else if (type == typeof(int))
             {
                 tmp = new Int32Accessor();
-            }
-            if (type == typeof(ulong))
+            } else if (type == typeof(ulong))
             {
                 tmp = new UInt64Accessor();
-            }
-            if (type == typeof(long))
+            } else if (type == typeof(long))
             {
                 tmp = new Int64Accessor();
-            }
-            if (type == typeof(float))
+            } else if (type == typeof(float))
             {
                 tmp = new SingleAccessor();
-            }
-            if (type == typeof(double))
+            } else if (type == typeof(double))
             {
                 tmp = new DoubleAccessor();
-            }
-            else if (type == typeof(Text))
+            } else if (type == typeof(Text))
             {
                 tmp = new TextAccessor();
-            }
-            else if (type == typeof(Data))
+            } else if (type == typeof(Data))
             {
                 tmp = new DataAccessor();
-            }
-            else if (type == typeof(Pointer))
+            } else if (type == typeof(Pointer))
             {
                 tmp = new PointerAccessor();
-            }
-            else
-            {
-#if FULLCLR
+            } else {
                 bool isGroup = Attribute.IsDefined(type, typeof(GroupAttribute));
-#else
-                TypeInfo typeInfo = type.GetTypeInfo();
-                bool isGroup = typeInfo.IsDefined(typeof(GroupAttribute));
-#endif
                 if (isGroup)
                 {
                     tmp = new GroupAccessor<T>();
                 }
                 else
                 {
-#if FULLCLR
                     var @struct = (StructAttribute)Attribute.GetCustomAttribute(type, typeof(StructAttribute));
-#else
-                    var @struct = typeInfo.GetCustomAttribute<StructAttribute>();
-#endif
                     if (@struct == null)
                     {
-#if FULLCLR
                         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(FixedSizeList<>))
                         {
                             tmp = Activator.CreateInstance(
                                 typeof(FixedSizeListAccessor<>).MakeGenericType(type.GetGenericArguments()));
                         } 
-#else
-                        if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(FixedSizeList<>))
-                        {
-                            tmp = Activator.CreateInstance(
-                                typeof(FixedSizeListAccessor<>).MakeGenericType(type.GenericTypeArguments));
-                        }
-#endif
                         else
                         {
                             tmp = new MissingMetadataAccessor<T>();
@@ -129,6 +105,9 @@ namespace CapnProto
         {
             throw new NotImplementedException();
         }
+
+        object IAccessor.GetElement(Pointer pointer, int index) => this.GetElement(pointer, index);
+        void IAccessor.SetElement(Pointer pointer, int index, object value) => this.SetElement(pointer, index, (T)value);
     }
     internal abstract class BasicPointerAccessor<T> : TypeAccessor<T>
     {
@@ -338,26 +317,14 @@ namespace CapnProto
         {
             try
             {
-#if FULLCLR
                 var methods = typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Static);
-#else
-                var methods = typeof(T).GetRuntimeMethods();
-#endif
                 var op_toT = FindMethod(methods, typeof(Pointer), typeof(T), "op_implicit") ?? FindMethod(methods, typeof(Pointer), typeof(T), "op_explicit");
                 var op_fromT = FindMethod(methods, typeof(T), typeof(Pointer), "op_implicit") ?? FindMethod(methods, typeof(T), typeof(Pointer), "op_explicit");
 
                 if (op_toT != null && op_fromT != null)
                 {
-#if FULLCLR
                     Func<Pointer, T> toT = (Func<Pointer, T>)Delegate.CreateDelegate(typeof(Func<Pointer, T>), null, op_toT);
                     Func<T, Pointer> fromT = (Func<T, Pointer>)Delegate.CreateDelegate(typeof(Func<T, Pointer>), null, op_fromT);
-#else
-                    ParameterExpression p;
-                    Func<Pointer, T> toT = Expression.Lambda<Func<Pointer, T>>(
-                        Expression.Convert(p = Expression.Parameter(typeof(T)), typeof(T), op_toT), p).Compile();
-                    Func<T, Pointer> fromT = Expression.Lambda<Func<T, Pointer>>(
-                        Expression.Convert(p = Expression.Parameter(typeof(T)), typeof(Pointer), op_fromT), p).Compile();
-#endif
                     return new OperatorBasedStructTypeAccessor(elementSize, dataWords, pointers, toT, fromT);
                 }
             }
@@ -449,7 +416,7 @@ namespace CapnProto
             public DynamicStructTypeAccessor(ElementSize elementSize, short dataWords, short pointers)
                 : base(elementSize, dataWords, pointers)
             { }
-#if FULLCLR
+
             public override T GetElement(Pointer pointer, int index)
             {
                 return (T)(dynamic)pointer.GetListStruct(index);
@@ -458,16 +425,7 @@ namespace CapnProto
             {
                 return (T)(dynamic)CreateImpl(pointer);
             }
-#else
-            public override T GetElement(Pointer pointer, int index)
-            {
-                return (T)(object)pointer.GetListStruct(index);
-            }
-            public override T Create(Pointer pointer)
-            {
-                return (T)(object)CreateImpl(pointer);
-            }
-#endif
+
             public override void SetElement(Pointer pointer, int index, T value)
             {
                 if (((IPointer)value).Pointer != pointer.GetListStruct(index))

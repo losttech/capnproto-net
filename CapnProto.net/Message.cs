@@ -19,13 +19,13 @@ namespace CapnProto
         {
             return Load(BufferedStreamSegmentFactory.Create(source, length, leaveOpen));
         }
-#if FULLCLR
+
         public static Message Load(string path)
         {
             var data = File.ReadAllBytes(path);
             return Load(BufferSegmentFactory.Create(data, 0, data.Length));
         }
-#endif
+
         public static Message Load(ISegmentFactory segmentFactory)
         {
             var msg = Cache<Message>.Pop() ?? new Message();

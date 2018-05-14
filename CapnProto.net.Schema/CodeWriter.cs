@@ -6,6 +6,8 @@ using CapnProto.Schema;
 using System.Linq;
 namespace CapnProto
 {
+    using System.ComponentModel;
+
     public abstract class CodeWriter
     {
 
@@ -178,6 +180,7 @@ namespace CapnProto
         }
 
         public abstract CodeWriter WriteLiteral(string value);
+        public abstract CodeWriter WriteList(System.Collections.IList list);
 
         public virtual CodeWriter Write(Schema.Type type, Value value)
         {
@@ -197,6 +200,7 @@ namespace CapnProto
                 case Value.Unions.uint64: return Write(value.uint64);
                 case Value.Unions.text: return WriteLiteral(value.text.ToString());
                 case Value.Unions.@enum: return WriteEnumLiteral(type, value.@enum);
+                case Value.Unions.list: return WriteList(value.list.AsList());
             }
             throw new NotSupportedException("Cannot write literal value: " + value.Union);
         }

@@ -129,14 +129,12 @@ namespace CapnProto
             return (Text)ptr;
 
         }
-#if FULLCLR
         public static Text Create(Pointer pointer, System.Data.IDataRecord reader, int fieldIndex)
         {
             if (reader == null) throw new ArgumentNullException("reader");
             if (fieldIndex < 0 || fieldIndex >= reader.FieldCount) throw new ArgumentOutOfRangeException("fieldIndex");
             return Textizer.Create(pointer, reader, fieldIndex);
         }
-#endif
         public override string ToString()
         {
             return value ?? (value = pointer.ReadString());

@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 namespace CapnProto
 {
+    using System.Reflection;
+
     public class CSharpStructWriter : CodeWriter
     {
 
@@ -141,6 +143,33 @@ namespace CapnProto
         {
             if (value == null) return Write("null");
             return Write("@\"").Write(value.Replace("\"", "\"\"")).Write("\"");
+        }
+
+        public override CodeWriter WriteList(System.Collections.IList list) {
+            if (list == null)
+                throw new ArgumentNullException(nameof(list));
+            var genericList = list.GetType().GetInterfaces()
+                .Where(iface => iface.IsConstructedGenericType && iface.GetGenericTypeDefinition() == typeof(IList<>))
+                .ToArray();
+            switch (genericList.Length) {
+            case 1:
+                var itemType = genericList[0].GetGenericArguments()[0];
+                var writer = this.GetType().GetMethod(nameof(Write), new[] {itemType});
+                if (writer == null)
+                    throw new NotSupportedException("Item type is not supported");
+                this.Write($"new global::{itemType.FullName}[]").Write("{");
+                foreach (object value in list) {
+                    writer.Invoke(this, new[] {value});
+                    this.Write(",");
+                }
+
+                this.Write("}");
+                return this;
+            case 0:
+                throw new ArgumentException(message: "List must implement IList<T> in addition to IList", paramName: nameof(list));
+            default:
+                throw new ArgumentException(message: "List must implement only IList<T> only for one T", paramName: nameof(list));
+            }
         }
         public override CodeWriter WriteConst(Schema.Node node)
         {

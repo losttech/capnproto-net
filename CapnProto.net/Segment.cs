@@ -10,11 +10,7 @@ namespace CapnProto
         {
             return "Segment " + Index.ToString(CultureInfo.InvariantCulture);
         }
-#if FULLCLR || PCL
         protected static readonly Encoding Encoding = new UTF8Encoding(false);
-#else
-        protected static readonly Encoding Encoding = Encoding.UTF8;
-#endif
 
         [ThreadStatic]
         private static Decoder sharedDecoder;

@@ -1,19 +1,21 @@
-﻿using CapnProto;
-using CapnProto.Schema;
-using Microsoft.CSharp;
-using NUnit.Framework;
-using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Tests
+﻿namespace Tests
 {
+    using CapnProto.Schema;
+    using NUnit.Framework;
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Threading;
+    using System.CodeDom.Compiler;
+    using System.Linq;
+    using System.Numerics;
+    using System.Reflection;
+    using CapnProto;
+    using Microsoft.CodeAnalysis;
+    using Microsoft.CodeAnalysis.CSharp;
+    using Microsoft.CSharp;
+
     [TestFixture]
     public class CapnpPluginTests
     {
@@ -32,27 +34,44 @@ namespace Tests
             using(var errors = new StringWriter())
             {
                 int exitCode = CapnpPlugin.Process(file, csharp, errors);
-                Assert.AreEqual(0, exitCode);
                 Assert.AreEqual("", errors.ToString());
+                Assert.AreEqual(0, exitCode);
                 code = csharp.ToString();
             }
             File.WriteAllText(Path.ChangeExtension(path, ".plugin.cs"), code);
-            Compile(code);
+            Compile(code, Path.GetFileName(path));
         }
-        static void Compile(string code)
+        static readonly MetadataReference NetStandard = MetadataReference.CreateFromFile(@"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.1\Facades\netstandard.dll");
+        static void Compile(string code, string name)
         {
-            using(var csc = new CSharpCodeProvider())
+            var references = new MetadataReference[]{
+                NetStandard,
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(BigInteger).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Message).Assembly.Location),
+            };
+            var compilation = CSharpCompilation.Create(name,
+                syntaxTrees: new[] { CSharpSyntaxTree.ParseText(code) },
+                references: references,
+                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            using (var emitMem = new MemoryStream())
             {
-                var options = new CompilerParameters();
-                options.ReferencedAssemblies.Add("System.dll");
-                options.ReferencedAssemblies.Add("CapnProto-net.dll");
-                var results = csc.CompileAssemblyFromSource(options, code);
-                foreach(var error in results.Errors)
+                var compilationResult = compilation.Emit(emitMem);
+                if (!compilationResult.Success)
                 {
-                    Console.WriteLine(error);
+                    var failures = compilationResult.Diagnostics.Where(diagnostic =>
+                        diagnostic.IsWarningAsError ||
+                        diagnostic.Severity == DiagnosticSeverity.Error);
+
+                    foreach (Diagnostic diagnostic in failures)
+                    {
+                        Console.Error.WriteLine("{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
+                    }
+                    Assert.Fail($"{failures.Count()} error(s):\n{string.Join("\n", failures)}");
                 }
-                Assert.AreEqual(0, results.Errors.Count);
             }
+            Assert.Pass();
         }
 
         [Test]
@@ -87,7 +106,7 @@ namespace Tests
             }
             var tmp = Interlocked.CompareExchange(ref code, null, null);
             File.WriteAllText(Path.ChangeExtension(path, ".console.cs"), tmp);
-            Compile(tmp);
+            Compile(tmp, Path.GetFileName(path));
         }
     }
 }

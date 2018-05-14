@@ -14,19 +14,13 @@ namespace CapnProto
         {
             Cache<Textizer>.Push(this);
         }
-#if FULLCLR || PCL
         internal static readonly Encoding Encoding = new UTF8Encoding(false);
-#else
-        internal static readonly Encoding Encoding = Encoding.UTF8;
-#endif
 
         void IRecyclable.Reset(bool reusing)
         {
             if (reusing)
             {
-#if FULLCLR
                 if (encoder != null) encoder.Reset();
-#endif
                 if (decoder != null) decoder.Reset();
             }
         }
@@ -176,7 +170,6 @@ namespace CapnProto
             
         }
 
-#if FULLCLR
         internal static Text Create(Pointer pointer, System.Data.IDataRecord reader, int fieldIndex)
         {
             // TODO: replace with GetChars work
@@ -203,7 +196,6 @@ namespace CapnProto
             //    throw new NotImplementedException();
             //}
         }
-#endif
     }
 
 }

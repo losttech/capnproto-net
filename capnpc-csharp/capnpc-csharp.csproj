@@ -58,9 +58,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\CapnProto.net\Properties\AssemblyInfo.cs">
-      <Link>AssemblyInfo.cs</Link>
-    </Compile>
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>

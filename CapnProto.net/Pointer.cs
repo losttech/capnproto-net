@@ -225,7 +225,7 @@ namespace CapnProto
             this.aux = aux;
         }
         private readonly ISegment segment;
-        private readonly uint startAndType, dataWordsAndPointers, aux;
+        internal readonly uint startAndType, dataWordsAndPointers, aux;
         // meaning:
 
         // struct:
@@ -1280,6 +1280,7 @@ namespace CapnProto
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsList()
         {
             switch(startAndType & 3)
