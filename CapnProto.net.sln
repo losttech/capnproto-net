@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2000
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CapnProto.net", "CapnProto.net\CapnProto.net.csproj", "{73BE5BD4-5087-4929-B6F3-7EC7FA06A2D4}"
 EndProject
@@ -44,8 +44,8 @@ Global
 		{134C12D1-3541-45BA-B937-6C0EC0214AF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{134C12D1-3541-45BA-B937-6C0EC0214AF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{134C12D1-3541-45BA-B937-6C0EC0214AF5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{134C12D1-3541-45BA-B937-6C0EC0214AF5}.Safe|Any CPU.ActiveCfg = Safe|Any CPU
-		{134C12D1-3541-45BA-B937-6C0EC0214AF5}.Safe|Any CPU.Build.0 = Safe|Any CPU
+		{134C12D1-3541-45BA-B937-6C0EC0214AF5}.Safe|Any CPU.ActiveCfg = Release|Any CPU
+		{134C12D1-3541-45BA-B937-6C0EC0214AF5}.Safe|Any CPU.Build.0 = Release|Any CPU
 		{8A223A31-F67C-4CBA-9FF5-001E9EBED3EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8A223A31-F67C-4CBA-9FF5-001E9EBED3EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A223A31-F67C-4CBA-9FF5-001E9EBED3EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -67,5 +67,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A84CE50F-D1A6-4CC8-BECB-3B598A31A43F}
 	EndGlobalSection
 EndGlobal
