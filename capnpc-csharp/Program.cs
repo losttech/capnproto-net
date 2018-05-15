@@ -37,7 +37,10 @@ namespace CapnProto.Schema
                 using (var stdout = Console.OpenStandardOutput())
                 using (var encodedOut = new StreamWriter(stdout, new UTF8Encoding(true)))
                 {
-                    return Process(stdin, encodedOut, Console.Error);
+                    int exitCode = Process(stdin, encodedOut, Console.Error);
+                    encodedOut.Flush();
+                    Console.Error.Flush();
+                    return exitCode;
                 }
             }
             catch(Exception ex)

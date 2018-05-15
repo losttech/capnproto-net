@@ -1,14 +1,11 @@
 ﻿using CapnProto.Schema;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 namespace CapnProto
 {
-    using System.Reflection;
-
     public class CSharpStructWriter : CodeWriter
     {
 
@@ -171,11 +168,23 @@ namespace CapnProto
                 throw new ArgumentException(message: "List must implement only IList<T> only for one T", paramName: nameof(list));
             }
         }
+
+        public override CodeWriter WriteStruct(Schema.Type structType, Pointer @struct) {
+            this.Write("new ")
+                .Write(structType)
+                .Write("{").Write(Environment.NewLine);
+            throw new NotImplementedException();
+            this.Write("}");
+            return this;
+        }
         public override CodeWriter WriteConst(Schema.Node node)
         {
             if (!node.IsValid() || node.Union != Schema.Node.Unions.@const) return this;
             var @const = node.@const;
-            return WriteLine().Write("public const ").Write(@const.type).Write(" ").Write(LocalName(node)).Write(" = ").Write(@const.type, @const.value).Write(";");
+            return WriteLine()
+                .Write((int)@const.type.Union <= (int)Schema.Type.Unions.text ? "public const " : "public static readonly ")
+                .Write(@const.type)
+                .Write(" ").Write(LocalName(node)).Write(" = ").Write(@const.type, @const.value).Write(";");
         }
         public override CodeWriter BeginClass(Schema.Node node)
         {
