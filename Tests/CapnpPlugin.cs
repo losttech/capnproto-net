@@ -8,6 +8,7 @@
     using System.IO;
     using System.Threading;
     using System.CodeDom.Compiler;
+    using System.ComponentModel;
     using System.Linq;
     using System.Numerics;
     using System.Reflection;
@@ -47,6 +48,7 @@
             var references = new MetadataReference[]{
                 NetStandard,
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(DefaultValueAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(BigInteger).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Message).Assembly.Location),
