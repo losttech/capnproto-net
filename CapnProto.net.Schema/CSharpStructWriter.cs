@@ -1029,7 +1029,7 @@ namespace CapnProto
                 WriteLine().Write($"public {LocalName(parent)} set_{field.name.ToString()}(string value)");
                 Indent();
                 WriteLine().Write($"if (((global::CapnProto.IPointer)this.{Escape(field.name.ToString())}).Pointer.IsValid) throw new global::System.InvalidOperationException();");
-                WriteLine().Write("var text = global::CapnProto.Text.Create(this, value);");
+                WriteLine().Write($"var text = global::CapnProto.Text.Create(this.{PointerName}, value);");
                 WriteLine().Write($"this.{Escape(field.name.ToString())} = text;");
                 WriteLine().Write("return this;");
                 Outdent();
