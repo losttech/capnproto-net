@@ -16,6 +16,7 @@
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
     using Microsoft.CSharp;
+    using System.Data;
 
     [TestFixture]
     public class CapnpPluginTests
@@ -52,6 +53,7 @@
                 MetadataReference.CreateFromFile(typeof(BigInteger).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Message).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IDataRecord).Assembly.Location),
             };
             var compilation = CSharpCompilation.Create(name,
                 syntaxTrees: new[] { CSharpSyntaxTree.ParseText(code) },
