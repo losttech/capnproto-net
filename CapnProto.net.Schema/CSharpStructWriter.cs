@@ -209,6 +209,11 @@ namespace CapnProto
         public override CodeWriter WriteConst(Schema.Node node)
         {
             if (!node.IsValid() || node.Union != Schema.Node.Unions.@const) return this;
+
+            WriteLine();
+            Write("public static partial class Constants");
+            Indent();
+
             var @const = node.@const;
             WriteLine();
             Write((int)@const.type.Union <= (int)Schema.Type.Unions.text ? "public const " : "public static readonly ");
@@ -217,7 +222,9 @@ namespace CapnProto
             else
                 Write(@const.type);
 
-            return Write(" ").Write(LocalName(node)).Write(" = ").Write(@const.type, @const.value).Write(";");
+            Write(" ").Write(LocalName(node)).Write(" = ").Write(@const.type, @const.value).Write(";");
+
+            return Outdent();
         }
         public override CodeWriter BeginClass(Schema.Node node)
         {
