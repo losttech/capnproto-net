@@ -128,7 +128,7 @@ namespace CapnProto
                 case "while":
                     return "@" + name;
                 default:
-                    return name;
+                    return name.Replace("_", "__").Replace("$", "_");
             }
         }
 
@@ -178,6 +178,8 @@ namespace CapnProto
                 throw new InvalidOperationException();
             int index = 0;
             foreach(Schema.Field field in type.@struct.fields) {
+                if (field.slot.type.Union == Schema.Type.Unions.text)
+                    continue;
                 WriteLine();
                 Write(Escape(field.name));
                 Write("=");
@@ -194,7 +196,6 @@ namespace CapnProto
                 case Schema.Type.Unions.uint32: this.Write(@struct.GetUInt32(offset)); break;
                 case Schema.Type.Unions.int64: this.Write(@struct.GetInt64(offset)); break;
                 case Schema.Type.Unions.uint64: this.Write(@struct.GetUInt64(offset)); break;
-                case Schema.Type.Unions.text: this.WriteLiteral(((Text)@struct.GetPointer(offset)).ToString()); break;
                 case Schema.Type.Unions.@enum: this.WriteEnumLiteral(field.slot.type, @struct.GetUInt16(offset)); break;
                 case Schema.Type.Unions.list: this.WriteList(@struct.GetPointer(offset).AsList()); break;
                 case Schema.Type.Unions.@struct: this.WriteStruct(field.slot.type, @struct.GetPointer(offset)); break;
@@ -204,6 +205,16 @@ namespace CapnProto
             }
 
             this.Outdent();
+
+            foreach(Schema.Field field in type.@struct.fields) {
+                if (field.slot.type.Union != Schema.Type.Unions.text)
+                    continue;
+                Write($".set_{field.name.ToString()}(");
+                this.WriteLiteral(((Text)@struct.GetPointer((int)field.slot.offset)).ToString());
+                Write(")");
+                WriteLine();
+            }
+
             return this;
         }
         public override CodeWriter WriteConst(Schema.Node node)
@@ -1012,7 +1023,18 @@ namespace CapnProto
                 }
             }
             Outdent();
-            return Outdent();
+            Outdent();
+
+            if (len == Schema.Type.LEN_POINTER && type.Union == Schema.Type.Unions.text) {
+                WriteLine().Write($"public {LocalName(parent)} set_{field.name.ToString()}(string value)");
+                Indent();
+                WriteLine().Write($"if (((global::CapnProto.IPointer)this.{Escape(field.name.ToString())}).Pointer.IsValid) throw new global::System.InvalidOperationException();");
+                WriteLine().Write("var text = global::CapnProto.Text.Create(this, value);");
+                WriteLine().Write($"this.{Escape(field.name.ToString())} = text;");
+                WriteLine().Write("return this;");
+                Outdent();
+            }
+            return this;
         }
 
         private CodeWriter WriteXorDefaultValue(Value defaultValue)
