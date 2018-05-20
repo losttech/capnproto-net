@@ -367,11 +367,13 @@ namespace CapnProto
 #else
         public float GetSingle(int index)
         {
-            throw new NotSupportedException();
+            int data = this.GetInt32(index);
+            return BitConverter.ToSingle(BitConverter.GetBytes(data), 0);
         }
         public void SetSingle(int index, float value)
         {
-            throw new NotSupportedException();
+            int data = BitConverter.ToInt32(BitConverter.GetBytes(value), 0);
+            this.SetInt32(index, data);
         }
         public double GetDouble(int index)
         {

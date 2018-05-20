@@ -171,10 +171,39 @@ namespace CapnProto
 
         public override CodeWriter WriteStruct(Schema.Type structType, Pointer @struct) {
             this.Write("new ")
-                .Write(structType)
-                .Write("{").Write(Environment.NewLine);
-            throw new NotImplementedException();
-            this.Write("}");
+                .Write(structType);
+            this.Indent();
+            Schema.Node type = this.Lookup(structType.@struct.typeId);
+            if (!type.@struct.fields.IsValid())
+                throw new InvalidOperationException();
+            int index = 0;
+            foreach(Schema.Field field in type.@struct.fields) {
+                WriteLine();
+                Write(Escape(field.name));
+                Write("=");
+                int offset = (int)field.slot.offset;
+                switch (field.slot.type.Union) {
+                case Schema.Type.Unions.@bool: this.Write(@struct.GetBoolean(offset)); break;
+                case Schema.Type.Unions.float32: this.Write(@struct.GetSingle(offset)); break;
+                case Schema.Type.Unions.float64: this.Write(@struct.GetDouble(offset)); break;
+                case Schema.Type.Unions.int8: this.Write(@struct.GetSByte(offset)); break;
+                case Schema.Type.Unions.uint8: this.Write(@struct.GetByte(offset)); break;
+                case Schema.Type.Unions.int16: this.Write(@struct.GetInt16(offset)); break;
+                case Schema.Type.Unions.uint16: this.Write(@struct.GetUInt16(offset)); break;
+                case Schema.Type.Unions.int32: this.Write(@struct.GetInt32(offset)); break;
+                case Schema.Type.Unions.uint32: this.Write(@struct.GetUInt32(offset)); break;
+                case Schema.Type.Unions.int64: this.Write(@struct.GetInt64(offset)); break;
+                case Schema.Type.Unions.uint64: this.Write(@struct.GetUInt64(offset)); break;
+                case Schema.Type.Unions.text: this.WriteLiteral(((Text)@struct.GetPointer(offset)).ToString()); break;
+                case Schema.Type.Unions.@enum: this.WriteEnumLiteral(field.slot.type, @struct.GetUInt16(offset)); break;
+                case Schema.Type.Unions.list: this.WriteList(@struct.GetPointer(offset).AsList()); break;
+                case Schema.Type.Unions.@struct: this.WriteStruct(field.slot.type, @struct.GetPointer(offset)); break;
+                }
+                Write(",");
+                index++;
+            }
+
+            this.Outdent();
             return this;
         }
         public override CodeWriter WriteConst(Schema.Node node)
