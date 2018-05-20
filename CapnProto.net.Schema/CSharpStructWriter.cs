@@ -210,10 +210,14 @@ namespace CapnProto
         {
             if (!node.IsValid() || node.Union != Schema.Node.Unions.@const) return this;
             var @const = node.@const;
-            return WriteLine()
-                .Write((int)@const.type.Union <= (int)Schema.Type.Unions.text ? "public const " : "public static readonly ")
-                .Write(@const.type)
-                .Write(" ").Write(LocalName(node)).Write(" = ").Write(@const.type, @const.value).Write(";");
+            WriteLine();
+            Write((int)@const.type.Union <= (int)Schema.Type.Unions.text ? "public const " : "public static readonly ");
+            if (@const.type.Union == Schema.Type.Unions.text)
+                Write("string");
+            else
+                Write(@const.type);
+
+            return Write(" ").Write(LocalName(node)).Write(" = ").Write(@const.type, @const.value).Write(";");
         }
         public override CodeWriter BeginClass(Schema.Node node)
         {
@@ -755,6 +759,11 @@ namespace CapnProto
         public override CodeWriter WriteLiteral(float value)
         {
             return Write(value).Write("F");
+        }
+        public override CodeWriter Write(float value) {
+            base.Write(value);
+            this.Write("F");
+            return this;
         }
         private CodeWriter WriteUnionTest(Stack<UnionStub> union)
         {
